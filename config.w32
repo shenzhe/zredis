@@ -1,0 +1,13 @@
+// $Id$
+// vim:ft=javascript
+
+// If your extension references something external, use ARG_WITH
+// ARG_WITH("zredis", "for zredis support", "no");
+
+// Otherwise, use ARG_ENABLE
+// ARG_ENABLE("zredis", "enable zredis support", "no");
+
+if (PHP_ZREDIS != "no") {
+	EXTENSION("zredis", "zredis.c", PHP_EXTNAME_SHARED, "/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1");
+}
+
