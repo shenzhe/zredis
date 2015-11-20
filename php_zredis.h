@@ -1,18 +1,19 @@
 /*
   +----------------------------------------------------------------------+
-  | PHP Version 7                                                        |
+  | zredis                                                              |
   +----------------------------------------------------------------------+
-  | Copyright (c) 1997-2015 The PHP Group                                |
+  | Licensed under the Apache License, Version 2.0 (the "License"); you  |
+  | may not use this file except in compliance with the License. You may |
+  | obtain a copy of the License at                                      |
+  | http://www.apache.org/licenses/LICENSE-2.0                           |
+  |                                                                      |
+  | Unless required by applicable law or agreed to in writing, software  |
+  | distributed under the License is distributed on an "AS IS" BASIS,    |
+  | WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or      |
+  | implied. See the License for the specific language governing         |
+  | permissions and limitations under the License.                       |
   +----------------------------------------------------------------------+
-  | This source file is subject to version 3.01 of the PHP license,      |
-  | that is bundled with this package in the file LICENSE, and is        |
-  | available through the world-wide-web at the following url:           |
-  | http://www.php.net/license/3_01.txt                                  |
-  | If you did not receive a copy of the PHP license and are unable to   |
-  | obtain it through the world-wide-web, please send a note to          |
-  | license@php.net so we can mail you a copy immediately.               |
-  +----------------------------------------------------------------------+
-  | Author:                                                              |
+  | Author: Adam Saponara <adam@atoi.cc>                                 |
   +----------------------------------------------------------------------+
 */
 
@@ -20,52 +21,31 @@
 
 #ifndef PHP_ZREDIS_H
 #define PHP_ZREDIS_H
-#include <hiredis.h>
+
+#define PHP_ZREDIS_VERSION "0.1"
+
 #include <hiredis.h>
 
 typedef struct {
-    redisContext* rctx;
+#if PHP_MAJOR_VERSION < 7
     zend_object std;
-} zredis_obj;
+#endif
+    redisContext* ctx;
+    long timeout_us;
+    int keep_alive_int_s;
+    size_t max_read_buf;
+    int throw_exceptions;
+    int err;
+    char errstr[128];
+#if PHP_MAJOR_VERSION >= 7
+    zend_object std;
+#endif
+} zredis_t;
+
 extern zend_module_entry zredis_module_entry;
 #define phpext_zredis_ptr &zredis_module_entry
 
-#define PHP_ZREDIS_VERSION "0.1.0" /* Replace with version number for your extension */
-
-#ifdef PHP_WIN32
-#	define PHP_ZREDIS_API __declspec(dllexport)
-#elif defined(__GNUC__) && __GNUC__ >= 4
-#	define PHP_ZREDIS_API __attribute__ ((visibility("default")))
-#else
-#	define PHP_ZREDIS_API
 #endif
-
-#ifdef ZTS
-#include "TSRM.h"
-#endif
-
-/*
-  	Declare any global variables you may need between the BEGIN
-	and END macros here:
-
-ZEND_BEGIN_MODULE_GLOBALS(zredis)
-	zend_long  global_value;
-	char *global_string;
-ZEND_END_MODULE_GLOBALS(zredis)
-*/
-
-/* Always refer to the globals in your function as ZREDIS_G(variable).
-   You are encouraged to rename these macros something shorter, see
-   examples in any other php module directory.
-*/
-#define ZREDIS_G(v) ZEND_MODULE_GLOBALS_ACCESSOR(zredis, v)
-
-#if defined(ZTS) && defined(COMPILE_DL_ZREDIS)
-ZEND_TSRMLS_CACHE_EXTERN();
-#endif
-
-#endif	/* PHP_ZREDIS_H */
-
 
 /*
  * Local variables:

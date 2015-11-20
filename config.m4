@@ -7,9 +7,9 @@ dnl without editing.
 
 dnl If your extension references something external, use with:
 
-dnl PHP_ARG_WITH(zredis, for zredis support,
+PHP_ARG_WITH(zredis, for zredis support,
 dnl Make sure that the comment is aligned:
-dnl [  --with-zredis             Include zredis support])
+[  --with-zredis             Include zredis support])
 
 dnl Otherwise use enable:
 
@@ -41,11 +41,11 @@ if test "$PHP_ZREDIS" != "no"; then
   fi
 
   dnl # --with-zredis -> add include path
-   PHP_ADD_INCLUDE($ZREDIS_DIR/include/hiredis)
+  PHP_ADD_INCLUDE($ZREDIS_DIR/include/hiredis)
 
   dnl # --with-zredis -> check for lib and symbol presence
-  LIBNAME=zredis # you may want to change this
-  LIBSYMBOL=zredis # you most likely want to change this 
+  LIBNAME=hiredis # you may want to change this
+  LIBSYMBOL=redisCommandArgv # you most likely want to change this 
 
   PHP_CHECK_LIBRARY($LIBNAME,$LIBSYMBOL,
   [
