@@ -19,8 +19,6 @@ redis extension for php7
   
   5) 把zrediso.so 加入 php.ini
   
-#TODO
-  0) pconnect（持久链接暂时有问题）
   
 #demo
   ```php
@@ -28,8 +26,12 @@ redis extension for php7
     $redis->connect();    //tcp方式，默认 127.0.0.1:6379
     //$redis->connect('/tmp/redis.sock');  //unix socket方式连接
     //$redis->connect('127.0.0.1', 6379, 3); //指定ip和端口，第三个参数是连接超时时间
+    //$redis->pconnect();    //持久连接tcp方式，默认 127.0.0.1:6379
+    //$redis->pconnect('/tmp/redis.sock');  //持久连接unix socket方式连接
+    //$redis->pconnect('127.0.0.1', 6379, 3); //持久连接指定ip和端口，第三个参数是连接超时时间
     $redis->set("key", $val);  //redis指令参考：http://redis.io/commands
     echo $redis->get("key");
+    $redis->close();   //关闭连接
   ```
   
   

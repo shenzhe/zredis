@@ -21,6 +21,11 @@
         {
 
         }
+        
+        public function close()
+        {
+            
+        }
 
         /**
          * 

@@ -37,8 +37,6 @@
 static zend_object_handlers zredis_obj_handlers;
 static zend_class_entry *zredis_ce;
 static zend_class_entry *zredis_exception_ce;
-static zredis_t *zredis_client;
-static int persisent = 0;
 
 ZEND_BEGIN_ARG_INFO_EX(arginfo_zredis_none, 0, 0, 0)
 ZEND_END_ARG_INFO()
@@ -277,7 +275,7 @@ static void* zredis_replyobj_create_string(const redisReadTask* task, char* str,
     zval* z = _zredis_replyobj_get_zval(task, &sz);
     if (task->type == REDIS_REPLY_ERROR) {
         object_init_ex(z, zredis_exception_ce);
-        zend_update_property_stringl(zredis_exception_ce, z, "message", sizeof("message")-1, str, len);
+        zend_update_property_stringl(zredis_exception_ce, z, ZEND_STRL("message"), str, len);
     } else {
         #if PHP_MAJOR_VERSION >= 7
             ZVAL_STRINGL(z, str, len);
@@ -514,12 +512,10 @@ static int _zredis_conn_init(zredis_t* client) {
 
 /* Invoked before connecting and at __destruct */
 static void _zredis_conn_deinit(zredis_t* client) {
-    if(!persisent) {
-        if (client->ctx) {
-            redisFree(client->ctx);
-        }
-        client->ctx = NULL;
+    if (client->ctx) {
+        redisFree(client->ctx);
     }
+    client->ctx = NULL;
 }
 
 /* {{{ proto void zredis::__construct()
@@ -539,13 +535,13 @@ PHP_METHOD(zredis, __construct) {
 }
 /* }}} */
 
-/* {{{ proto void zredis::__destruct()
+/* {{{ proto void zredis::close()
    Destructor for zredis. */
-PHP_METHOD(zredis, __destruct) {
+PHP_METHOD(zredis, close) {
     zredis_t* client;
     return_value = getThis();
     client = Z_ZREDIS_P(return_value);
-    if(!persisent) {
+    if(client->persisent) {
         _zredis_conn_deinit(client);
     }
 }
@@ -615,6 +611,7 @@ PHP_FUNCTION(zredis_connect) {
         RETURN_FALSE;
     }
     if (REDIS_OK == _zredis_conn_init(client)) {
+        zend_update_property_long(zredis_ce, zobj, ZEND_STRL("fd"), client->ctx->fd);
         RETURN_TRUE;
     }
     RETURN_FALSE;
@@ -649,7 +646,6 @@ PHP_FUNCTION(zredis_pconnect) {
             }
             client->ctx = redisConnect(ip, port);
         }
-        persisent = 1;
         if (!client->ctx) {
             PHP_ZREDIS_SET_ERROR_EX(client, REDIS_ERR, "redisConnect returned NULL");
             RETURN_FALSE;
@@ -658,7 +654,8 @@ PHP_FUNCTION(zredis_pconnect) {
             RETURN_FALSE;
         }
         if (REDIS_OK == _zredis_conn_init(client)) {
-            zredis_client = client;
+            client->persisent = 1;
+            zend_update_property_long(zredis_ce, zobj, ZEND_STRL("fd"), client->ctx->fd);
             RETURN_TRUE;
         }
         RETURN_FALSE;
@@ -897,7 +894,7 @@ PHP_FUNCTION(zredis_get_last_error) {
 /* {{{ zredis_methods */
 zend_function_entry zredis_methods[] = {
     PHP_ME(zredis, __construct, arginfo_zredis_none, ZEND_ACC_CTOR | ZEND_ACC_PUBLIC)
-    PHP_ME(zredis, __destruct,  arginfo_zredis_none, ZEND_ACC_PUBLIC)
+    PHP_ME(zredis, close,  arginfo_zredis_none, ZEND_ACC_PUBLIC)
     PHP_ME(zredis, __call,      arginfo_zredis_call, ZEND_ACC_PUBLIC)
     PHP_ME_MAPPING(connect,              zredis_connect,              arginfo_zredis_connect,              ZEND_ACC_PUBLIC)
     PHP_ME_MAPPING(pconnect,             zredis_pconnect,             arginfo_zredis_pconnect,             ZEND_ACC_PUBLIC)
@@ -945,10 +942,12 @@ PHP_MINIT_FUNCTION(zredis) {
     #if PHP_MAJOR_VERSION >= 7
         zredis_ce = zend_register_internal_class(&ce);
         zredis_ce->create_object = zredis_obj_new;
+        zend_declare_property_long(zredis_ce, ZEND_STRL("fd"), 0, ZEND_ACC_PUBLIC TSRMLS_CC); 
     #else
         ce.create_object = zredis_obj_new;
         zredis_ce = zend_register_internal_class(&ce TSRMLS_CC);
-    #endif
+        zend_declare_property_long(zredis_ce, ZEND_STRL("fd"), 0, ZEND_ACC_PUBLIC TSRMLS_CC); 
+    #endif 
     memcpy(&zredis_obj_handlers, zend_get_std_object_handlers(), sizeof(zredis_obj_handlers));
     #if PHP_MAJOR_VERSION >= 7
         zredis_obj_handlers.offset = XtOffsetOf(zredis_t, std);
@@ -967,12 +966,6 @@ PHP_MINIT_FUNCTION(zredis) {
 
 /* {{{ PHP_MSHUTDOWN_FUNCTION */
 PHP_MSHUTDOWN_FUNCTION(zredis) {
-    if(persisent) {
-        if (zredis_client->ctx) {
-            redisFree(zredis_client->ctx);
-        }
-        zredis_client->ctx = NULL;
-    }
     return SUCCESS;
 }
 /* }}} */

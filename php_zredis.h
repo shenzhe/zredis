@@ -36,6 +36,7 @@ typedef struct {
     size_t max_read_buf;
     int throw_exceptions;
     int err;
+    int persisent;
     char errstr[128];
 #if PHP_MAJOR_VERSION >= 7
     zend_object std;
