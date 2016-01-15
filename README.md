@@ -1,24 +1,39 @@
 # zredis
 redis extension for php7
 
-# 编译hiredis
+# 编译hiredis（可省略）
+~~~
   0) git clone https://github.com/redis/hiredis
   
   1) make
   
   2) make install
+~~~
+# 导出项目
+导出项目带hiredis（如果不单独编译hiredis，一定要下面的方式拉项目)
 
+~~~
+git clone --recursive https://github.com/shenzhe/hiredis
+~~~
+
+如果已经编译或者要单独编译hiredis的，可以直接clone，如下：
+
+~~~
+git clone https://github.com/shenzhe/hiredis
+~~~
 # 编译扩展
-  0) phpize
+~~~
+
+  phpize
   
-  1) ./configure
+  ./configure
   
-  2) make
+  make
   
-  3) make install
+  make install
   
-  5) 把zrediso.so 加入 php.ini
-  
+  把zrediso.so 加入 php.ini
+  ~~~
   
 #demo
   ```php
